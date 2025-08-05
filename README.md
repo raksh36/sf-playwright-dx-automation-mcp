@@ -12,6 +12,9 @@ This document provides a comprehensive overview of the setup, configuration, and
     - [2. Set up Salesforce Repository](#2-set-up-salesforce-repository)
     - [3. Push Repository Content to GitHub](#3-push-repository-content-to-github)
   - [Salesforce Configuration](#salesforce-configuration)
+  - [MCP Server Configuration](#mcp-server-configuration)
+    - [Playwright MCP Server](#playwright-mcp-server)
+    - [Salesforce DX MCP Server](#salesforce-dx-mcp-server)
   - [Demonstration Walkthrough](#demonstration-walkthrough)
     - [Exercise 1: Product Definitions \& Cache](#exercise-1-product-definitions--cache)
     - [Exercise 2: Create Opportunity \& Solution](#exercise-2-create-opportunity--solution)
@@ -86,6 +89,33 @@ To connect this project to your Salesforce org, you need to authenticate with th
     ```
 2.  Log in to your Salesforce org.
 3.  Once you have successfully logged in, you can close the browser window. The Salesforce CLI is now authenticated with your org.
+
+## MCP Server Configuration
+
+The MCP (Multi-modal Co-pilot) servers are required to run the automated demonstrations.
+
+### Playwright MCP Server
+The Playwright MCP Server allows Cursor to control a web browser for UI automation. To install and configure it, please refer to the official Cursor documentation on MCP servers:
+
+*   [Cursor MCP Servers Documentation](https://docs.cursor.com/en/tools/mcp)
+
+### Salesforce DX MCP Server
+The Salesforce DX MCP Server allows Cursor to interact with your Salesforce org using the Salesforce CLI. To configure it, you need to add a snippet to your Cursor `mcp.json` file.
+
+1.  Open your Cursor settings.
+2.  Locate and open the `mcp.json` file.
+3.  Add the following configuration, as described in the [official Salesforce MCP repository](https://github.com/salesforcecli/mcp?tab=readme-ov-file#configure-other-clients-to-use-the-salesforce-dx-mcp-server):
+
+    ```json
+    {
+      "mcpServers": {
+        "Salesforce DX": {
+          "command": "npx",
+          "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG", "--toolsets", "all"]
+        }
+      }
+    }
+    ```
 
 ## Demonstration Walkthrough
 
