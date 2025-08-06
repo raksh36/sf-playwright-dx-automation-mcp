@@ -21,9 +21,6 @@ This document provides a comprehensive overview of the setup, configuration, and
     - [Exercise 3: Developer Console](#exercise-3-developer-console)
   - [Advanced Automation: Using Instruction Files](#advanced-automation-using-instruction-files)
   - [Troubleshooting](#troubleshooting)
-  - [How Do You Plan to Deploy Your Changes?](#how-do-you-plan-to-deploy-your-changes)
-  - [Configure Your Salesforce DX Project](#configure-your-salesforce-dx-project)
-  - [Read All About It](#read-all-about-it)
 
 ## Introduction
 
