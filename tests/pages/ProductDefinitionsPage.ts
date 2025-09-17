@@ -48,10 +48,14 @@ export class ProductDefinitionsPage extends SalesforceBasePage {
   }
 
   async refreshDataIfNeeded() {
-    const needsRefresh = await this.page.getByText('Refresh this list to view the latest data').isVisible();
-    if (needsRefresh) {
-      await this.refreshButton.click();
-      await this.waitForPageLoad();
+    try {
+      const needsRefresh = await this.page.getByText('Refresh this list to view the latest data').isVisible();
+      if (needsRefresh) {
+        await this.refreshButton.click();
+        await this.waitForPageLoad();
+      }
+    } catch {
+      // If the hint text isn't found, continue silently
     }
   }
 

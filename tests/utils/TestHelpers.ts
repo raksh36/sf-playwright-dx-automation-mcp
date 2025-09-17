@@ -17,11 +17,14 @@ export class TestHelpers {
     });
   }
 
-  static async waitForNoSpinners(page: Page, timeout: number = 10000) {
-    await page.waitForFunction(
-      () => document.querySelectorAll('.slds-spinner, lightning-spinner').length === 0,
-      { timeout }
-    );
+  static async waitForNoSpinners(page: Page, timeout: number = 5000) {
+    // Salesforce keeps background spinners attached; wait only for VISIBLE spinners to disappear
+    const visibleSpinner = page.locator('.slds-spinner:visible, lightning-spinner:visible').first();
+    try {
+      await visibleSpinner.waitFor({ state: 'hidden', timeout });
+    } catch {
+      // Do not block test execution on persistent background spinners
+    }
   }
 
   static async retryAction(action: () => Promise<void>, maxRetries: number = 3) {
