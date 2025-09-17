@@ -15,10 +15,18 @@ export class SalesforceAuth {
   async getOrgInfo() {
     try {
       const { stdout } = await execAsync(
-        `sf org display --target-org ${this.orgAlias} --json`,
+        `sf org display --target-org ${this.orgAlias} --json --loglevel fatal`,
         { cwd: this.projectPath }
       );
-      return JSON.parse(stdout);
+      const trimmed = stdout.trim();
+      // Some environments may prepend/append logs to stdout. Extract the JSON object safely.
+      const start = trimmed.indexOf('{');
+      const end = trimmed.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        const jsonSlice = trimmed.slice(start, end + 1);
+        return JSON.parse(jsonSlice);
+      }
+      throw new Error(`Unexpected CLI output (no JSON found): ${trimmed.substring(0, 200)}`);
     } catch (error) {
       throw new Error(`Failed to get org info: ${error}`);
     }
