@@ -16,17 +16,38 @@ export class SalesforceAuth {
     try {
       const { stdout } = await execAsync(
         `sf org display --target-org ${this.orgAlias} --json --loglevel fatal`,
-        { cwd: this.projectPath }
+        { cwd: this.projectPath, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1', SFDX_JSON_TO_STDOUT: '1' } }
       );
       const trimmed = stdout.trim();
+
+      // Strip ANSI escape codes that can corrupt JSON parsing in some terminals
+      const decolorized = trimmed.replace(/\x1B\[[0-?]*[ -\/]*[@-~]/g, '');
+
       // Some environments may prepend/append logs to stdout. Extract the JSON object safely.
-      const start = trimmed.indexOf('{');
-      const end = trimmed.lastIndexOf('}');
+      const start = decolorized.indexOf('{');
+      const end = decolorized.lastIndexOf('}');
       if (start !== -1 && end !== -1 && end > start) {
-        const jsonSlice = trimmed.slice(start, end + 1);
-        return JSON.parse(jsonSlice);
+        const jsonSlice = decolorized.slice(start, end + 1);
+        try {
+          return JSON.parse(jsonSlice);
+        } catch (parseErr) {
+          // Fall through to text-based parsing below
+        }
       }
-      throw new Error(`Unexpected CLI output (no JSON found): ${trimmed.substring(0, 200)}`);
+
+      // Text-based fallback: try to extract instance URL from human-readable output
+      const urlMatch = decolorized.match(/https?:\/\/[^\s'"<>]+salesforce\.com[^\s'"<>]*/i);
+      if (urlMatch && urlMatch[0]) {
+        return {
+          result: {
+            alias: this.orgAlias,
+            connectedStatus: 'Connected',
+            instanceUrl: urlMatch[0]
+          }
+        };
+      }
+
+      throw new Error(`Unexpected CLI output (no JSON or URL found): ${decolorized.substring(0, 200)}`);
     } catch (error) {
       throw new Error(`Failed to get org info: ${error}`);
     }
