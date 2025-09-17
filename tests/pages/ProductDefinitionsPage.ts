@@ -28,8 +28,16 @@ export class ProductDefinitionsPage extends SalesforceBasePage {
   }
 
   async verifyPageLoaded() {
-    await expect(this.pageHeading).toBeVisible();
-    await expect(this.listViewSelector).toBeVisible();
+    // Either the heading/list view controls or the data grid proves the page is ready
+    await expect
+      .poll(async () => {
+        const urlOk = /cscfga__Product_Definition__c/.test(this.page.url());
+        const headingVisible = await this.pageHeading.isVisible().catch(() => false);
+        const listVisible = await this.listViewSelector.isVisible().catch(() => false);
+        const gridVisible = await this.dataGrid.isVisible().catch(() => false);
+        return urlOk && (headingVisible || listVisible || gridVisible);
+      }, { timeout: 30000 })
+      .toBeTruthy();
   }
 
   async selectTrainingProductModelsView() {

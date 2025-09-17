@@ -9,17 +9,19 @@ export class SalesforceBasePage {
   constructor(page: Page) {
     this.page = page;
     this.searchButton = page.getByRole('button', { name: 'Search' });
-    this.globalHeader = page.locator('navigation[aria-label="Global Header"]');
+    this.globalHeader = page.locator('header, .slds-global-header');
     this.appLauncher = page.getByRole('button', { name: 'App Launcher' });
   }
 
   async waitForPageLoad() {
-    await this.page.waitForLoadState('networkidle');
-    await expect(this.globalHeader).toBeVisible();
+    // Lightning apps keep long-running network connections; avoid waiting for 'networkidle'
+    await this.page.waitForLoadState('domcontentloaded');
+    // App launcher is a reliable indicator that Lightning shell is ready
+    await expect(this.appLauncher).toBeVisible();
   }
 
   async navigateToUrl(url: string) {
-    await this.page.goto(url);
+    await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     await this.waitForPageLoad();
   }
 

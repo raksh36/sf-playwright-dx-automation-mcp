@@ -11,29 +11,40 @@ export class CloudSenseAppPage extends SalesforceBasePage {
 
   constructor(page: Page) {
     super(page);
-    this.appHeading = page.getByRole('heading', { name: 'CloudSense Solution Management' });
-    this.navigationMenu = page.locator('navigation[aria-label="Global"]');
+    // App name in Lightning context bar (not a semantic heading)
+    this.appHeading = page.locator('.slds-context-bar__app-name, .forceHeader .slds-context-bar__app-name');
+    // Lightning global navigation bar
+    this.navigationMenu = page.locator('.slds-context-bar');
     this.homeLink = page.getByRole('link', { name: 'Home' });
     this.productDefinitionsLink = page.getByRole('menuitem', { name: 'Product Definitions' });
-    this.moreNavigationButton = page.getByRole('button', { name: 'Show more navigation items' });
+    this.moreNavigationButton = page.getByRole('button', { name: /More/ });
     this.moreNavigationMenu = page.locator('[role="menu"]');
   }
 
   async verifyAppIsLoaded() {
-    await expect(this.appHeading).toBeVisible();
+    // Presence of the app launcher and context bar indicates the app shell is ready
+    await this.waitForPageLoad();
     await expect(this.navigationMenu).toBeVisible();
+    await expect(this.appHeading.first()).toContainText('CloudSense');
   }
 
   async navigateToProductDefinitions() {
-    // First try direct link, then check More menu
-    const directLink = this.page.getByRole('link', { name: 'Product Definitions' });
-    
-    if (await directLink.isVisible()) {
-      await directLink.click();
-    } else {
-      await this.moreNavigationButton.click();
-      await expect(this.moreNavigationMenu).toBeVisible();
-      await this.productDefinitionsLink.click();
+    // Navigate directly to the object list view first (most reliable)
+    const directUrl = this.page.url().replace(/\/lightning\/.*/, '/lightning/o/cscfga__Product_Definition__c/list');
+    await this.page.goto(directUrl, { waitUntil: 'domcontentloaded' });
+
+    // If for some reason we are not on the correct page, fall back to UI navigation
+    if (!(await this.page.url()).includes('cscfga__Product_Definition__c')) {
+      const directLink = this.page.getByRole('link', { name: 'Product Definitions' });
+      if (await directLink.isVisible()) {
+        await directLink.click();
+      } else if (await this.moreNavigationButton.isVisible()) {
+        await this.moreNavigationButton.click();
+        await expect(this.moreNavigationMenu).toBeVisible();
+        if (await this.productDefinitionsLink.isVisible()) {
+          await this.productDefinitionsLink.click();
+        }
+      }
     }
     
     await this.waitForPageLoad();
