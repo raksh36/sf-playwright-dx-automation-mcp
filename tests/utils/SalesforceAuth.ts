@@ -35,20 +35,39 @@ export class SalesforceAuth {
   async getSessionUrl() {
     try {
       const { stdout } = await execAsync(
-        `sf org open --target-org ${this.orgAlias} --url-only`,
+        `sf org open --target-org ${this.orgAlias} --json --loglevel fatal`,
         { cwd: this.projectPath }
       );
-      const raw = stdout.trim();
+      const trimmed = stdout.trim();
 
-      // If the CLI returns a full URL (expected), use it directly
-      if (/^https?:\/\//i.test(raw)) {
-        return raw;
+      // Prefer JSON parsing to extract the URL precisely
+      const start = trimmed.indexOf('{');
+      const end = trimmed.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        try {
+          const jsonSlice = trimmed.slice(start, end + 1);
+          const parsed = JSON.parse(jsonSlice);
+          const urlFromJson = parsed?.result?.url || parsed?.result?.openUrl;
+          if (typeof urlFromJson === 'string' && /^https?:\/\//i.test(urlFromJson)) {
+            return urlFromJson;
+          }
+        } catch {
+          // fall through to regex based extraction
+        }
       }
+
+      // Fallback: extract first URL-like token from stdout
+      const urlMatch = trimmed.match(/https?:\/\/[^\s'"<>]+/i);
+      if (urlMatch && urlMatch[0]) {
+        return urlMatch[0];
+      }
+
+      const raw = trimmed;
 
       // Fallback: treat stdout as a session id and compose a frontdoor URL
       // using the instance URL from org info
       const orgInfo = await this.getOrgInfo();
-      const instanceUrl = orgInfo?.result?.instanceUrl || 'https://login.salesforce.com';
+      const instanceUrl = orgInfo?.result?.instanceUrl || process.env.SF_INSTANCE_URL || 'https://login.salesforce.com';
       const base = instanceUrl.replace(/\/$/, '');
       return `${base}/secur/frontdoor.jsp?sid=${encodeURIComponent(raw)}`;
     } catch (error) {
