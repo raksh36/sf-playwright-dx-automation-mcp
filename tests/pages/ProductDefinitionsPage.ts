@@ -82,13 +82,19 @@ export class ProductDefinitionsPage extends SalesforceBasePage {
 
   async selectAllProducts() {
     await this.selectAllCheckbox.click();
+    // If action mode didn't trigger, click the first row checkbox explicitly
+    if (!(await this.actionModeIndicator.isVisible().catch(() => false))) {
+      const firstRowCheckbox = this.dataGrid.getByRole('checkbox', { name: /^Select Item 1/ });
+      await firstRowCheckbox.click();
+    }
     await expect(this.actionModeIndicator).toBeVisible();
   }
 
   async selectSpecificProducts(productNames: string[]) {
     for (const productName of productNames) {
       const productRow = this.page.getByRole('row', { name: new RegExp(productName) });
-      const checkbox = productRow.locator('input[type="checkbox"]').first();
+      // Prefer the row selection checkbox, not the disabled "Active" checkbox
+      const checkbox = productRow.getByRole('checkbox', { name: /^Select Item/ });
       await checkbox.click();
     }
     await expect(this.actionModeIndicator).toBeVisible();
