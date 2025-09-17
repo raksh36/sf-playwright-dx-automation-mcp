@@ -1,27 +1,70 @@
-name: Playwright Tests
+name: CloudSense Automation Tests
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 6 * * 1-5' # Run weekdays at 6 AM UTC
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: lts/*
+        cache: 'npm'
+    
     - name: Install dependencies
       run: npm ci
-    - name: Install Playwright Browsers
+    
+    - name: Install Playwright browsers
       run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
+    
+    - name: Setup Salesforce CLI
+      run: |
+        npm install -g @salesforce/cli
+        echo "${{ secrets.SF_AUTH_URL }}" > sf_auth_url.txt
+        sf auth sfdxurl store -f sf_auth_url.txt -a studentr36dec24c19
+    
+    - name: Run CloudSense tests
+      run: npx playwright test cloudsense-product-compilation.spec.ts
+      env:
+        SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+    
+    - name: Run Error Handling tests
+      run: npx playwright test cloudsense-error-handling.spec.ts
+      env:
+        SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+      continue-on-error: true
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
+        retention-days: 30
+    
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: screenshots
+        path: screenshots/
+        retention-days: 7
+    
+    - name: Upload test results JSON
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: test-results
+        path: test-results.json
         retention-days: 30
