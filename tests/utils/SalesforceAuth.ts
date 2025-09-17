@@ -99,16 +99,19 @@ export class SalesforceAuth {
   async authenticateInBrowser(page: any) {
     // Navigate to the authenticated frontdoor URL
     const authUrl = await this.getSessionUrl();
-    await page.goto(authUrl);
-    await page.waitForLoadState('networkidle');
+    await page.goto(authUrl, { waitUntil: 'domcontentloaded' });
+
+    // Wait for Lightning shell to be ready instead of networkidle (Salesforce holds long connections)
+    const appLauncher = page.getByRole('button', { name: 'App Launcher' });
+    await appLauncher.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
 
     // If we somehow land on the login page, retry once with a fresh URL
     const usernameField = page.locator('input[placeholder="Username"]');
     if (await usernameField.isVisible().catch(() => false)) {
       const retryUrl = await this.getSessionUrl();
       if (retryUrl && retryUrl !== authUrl) {
-        await page.goto(retryUrl);
-        await page.waitForLoadState('networkidle');
+        await page.goto(retryUrl, { waitUntil: 'domcontentloaded' });
+        await appLauncher.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
       }
     }
   }
