@@ -21,9 +21,9 @@ test.describe('Exercise 2: Create Opportunity and Configure Training Mobile Solu
 	test('Create Opportunity and Configure Solution', async ({ page }) => {
 		// 1) Navigate to Opportunities app page and create a new Opportunity
 		await page.goto(`${testConfig.salesforce.instanceUrl}/lightning/o/Opportunity/list`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByRole('heading', { name: /Opportunities/ })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Opportunities', exact: true })).toBeVisible();
 
-		await page.getByRole('button', { name: 'New' }).click();
+		await page.getByRole('main').getByRole('button', { name: 'New', exact: true }).click();
 		// Modal with Opportunity fields
 		await expect(page.getByRole('heading', { name: /New Opportunity/ })).toBeVisible();
 
