@@ -34,16 +34,10 @@ jobs:
         echo "${{ secrets.SF_AUTH_URL }}" > sf_auth_url.txt
         sf auth sfdxurl store -f sf_auth_url.txt -a studentr36dec24c19
     
-    - name: Run CloudSense tests
-      run: npx playwright test cloudsense-product-compilation.spec.ts
+    - name: Run Exercise 2 tests
+      run: npx playwright test tests/cloudsense-exercise-2.spec.ts
       env:
         SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
-    
-    - name: Run Error Handling tests
-      run: npx playwright test cloudsense-error-handling.spec.ts
-      env:
-        SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
-      continue-on-error: true
     
     - name: Upload test results
       uses: actions/upload-artifact@v4
