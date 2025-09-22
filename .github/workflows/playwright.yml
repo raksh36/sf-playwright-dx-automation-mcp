@@ -1,12 +1,8 @@
 name: CloudSense Automation Tests
 
 on:
-  push:
-    branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master ]
-  schedule:
-    - cron: '0 6 * * 1-5' # Run weekdays at 6 AM UTC
 
 jobs:
   test:
