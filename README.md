@@ -199,3 +199,7 @@ For more complex automation scenarios, you can provide a text file with a set of
 *   **Authentication Issues:** If you are having trouble authenticating with your Salesforce org, make sure you are using the correct login URL and that your user has the necessary permissions.
 *   **Playwright Errors:** If you encounter errors while running the Playwright scripts, make sure you have installed the necessary browsers (`npx playwright install`).
 *   **Data Not Found:** If the scripts are unable to find the required data (e.g., product definitions, accounts), make sure the necessary data has been loaded into your Salesforce org.
+
+## Additional Guides
+
+- See TESTING.md: ATDD to Playwright UI Automation for how we convert Given/When/Then acceptance criteria into maintainable Playwright tests.
